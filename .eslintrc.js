@@ -2,11 +2,9 @@ require('@alattalatta/eslint-config/patch')
 
 module.exports = {
   root: true,
-  extends: [
-    '@alattalatta/eslint-config/react',
-  ],
+  extends: ['@alattalatta/eslint-config', 'plugin:wc/recommended', 'plugin:lit/recommended'],
   parserOptions: {
-    project: './tsconfig.json'
+    project: './tsconfig.json',
   },
   settings: {
     'import/resolver': {
@@ -14,5 +12,8 @@ module.exports = {
         project: ['./tsconfig.json'],
       },
     },
-  }
+    wc: {
+      elementBaseClasses: ['LitElement'],
+    },
+  },
 }
