@@ -3,10 +3,8 @@
   "compilerOptions": {
     "composite": false,
     "esModuleInterop": true,
-    "experimentalDecorators": true,
     "forceConsistentCasingInFileNames": true,
     "inlineSources": false,
-    "isolatedModules": true,
     "lib": ["dom", "dom.iterable", "es2021"],
     "module": "esnext",
     "moduleResolution": "node",
