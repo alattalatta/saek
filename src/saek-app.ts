@@ -1,14 +1,15 @@
 import { css, html, LitElement } from 'lit'
 
-import './saek-canvas'
+import './saek-color-square'
 
 class App extends LitElement {
   static styles = css`
     :host {
       color: blue;
+      display: block;
     }
 
-    saek-canvas {
+    saek-color-square {
       width: 300px;
       height: 300px;
     }
@@ -16,7 +17,7 @@ class App extends LitElement {
 
   protected render(): unknown {
     return html`<div>
-      <saek-canvas></saek-canvas>
+      <saek-color-square hue="180"></saek-color-square>
     </div>`
   }
 }

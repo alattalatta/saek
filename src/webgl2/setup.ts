@@ -11,7 +11,7 @@ type Context = {
   draw: () => void
   gl: WebGL2RenderingContext
   resize: (width: number, height: number) => void
-  get Resolution(): readonly [width: number, height: number]
+  get resolution(): readonly [width: number, height: number]
 }
 
 function setup(element: HTMLCanvasElement): Context {
@@ -76,7 +76,7 @@ function setup(element: HTMLCanvasElement): Context {
     createProgram: createProgramWrap,
     draw,
     resize,
-    get Resolution(): readonly [number, number] {
+    get resolution(): readonly [number, number] {
       return [element.width, element.height]
     },
   }

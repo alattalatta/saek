@@ -1,18 +1,16 @@
 import { css, html, LitElement } from 'lit'
 import { createRef, ref } from 'lit/directives/ref'
 
+import type { UniformTV } from './webgl2'
 import { WebGL2CanvasController } from './webgl2'
 
-class CanvasWebGL2 extends LitElement {
+class Canvas<UniformKeys extends string> extends LitElement {
   static properties = {
-    hue: { state: true },
+    uniforms: { type: Object },
   }
 
   static styles = css`
-    :host {
-      display: block;
-    }
-
+    :host,
     canvas {
       width: 100%;
       height: 100%;
@@ -20,16 +18,11 @@ class CanvasWebGL2 extends LitElement {
     }
   `
 
-  private canvasRef = createRef<HTMLCanvasElement>()
-  private canvasController = new WebGL2CanvasController<'u_hue'>(this, this.canvasRef)
+  rendererRef = createRef<HTMLCanvasElement>()
+  uniforms = {} as Record<UniformKeys, UniformTV>
+
+  private canvasController = new WebGL2CanvasController<UniformKeys>(this, this.rendererRef)
   private observer: ResizeObserver | null = null
-
-  private hue: number
-
-  constructor() {
-    super()
-    this.hue = 0
-  }
 
   connectedCallback(): void {
     super.connectedCallback()
@@ -51,25 +44,11 @@ class CanvasWebGL2 extends LitElement {
   }
 
   protected render(): unknown {
-    return html`
-      <canvas ${ref(this.canvasRef)}></canvas>
-      <input type="range" min="0" max="360" step="0.01" value=${this.hue} @input=${this.updateHue} />
-      <p>${this.hue}</p>
-    `
-  }
-
-  protected updated(): void {
-    this.canvasController.draw({
-      u_hue: ['1f', [this.hue]],
-    })
-  }
-
-  private updateHue(event: InputEvent): void {
-    const target = event.target as HTMLInputElement
-    this.hue = Number(target.value || 0)
+    this.canvasController.draw(this.uniforms)
+    return html`<canvas ${ref(this.rendererRef)}></canvas>`
   }
 }
 
-customElements.define('saek-canvas', CanvasWebGL2)
+customElements.define('saek-canvas', Canvas)
 
-export { CanvasWebGL2 }
+export { Canvas }

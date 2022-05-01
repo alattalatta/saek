@@ -27,7 +27,7 @@ export class WebGL2CanvasController<UniformKeys extends string> implements React
 
       this.program.apply({
         ...umap,
-        u_resolution: ['2f', this.context.Resolution],
+        u_resolution: ['2f', this.context.resolution],
       })
       this.context.draw()
     }
