@@ -12,6 +12,9 @@
   "devDependencies": {
     "@alattalatta/eslint-config": "^1.0.0",
     "@alattalatta/prettier-config": "^1.0.0",
+    "@parcel/core": "^2.5.0",
+    "@parcel/transformer-glsl": "2.5.0",
+    "@types/node": "16",
     "eslint": "^8.14.0",
     "eslint-plugin-lit": "^1.6.1",
     "eslint-plugin-wc": "^1.3.2",
