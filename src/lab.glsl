@@ -5,6 +5,7 @@ precision highp float;
 #define LAB_XYZ_E 0.008856
 #define LAB_XYZ_K 903.3
 
+uniform bool u_force_gamut;
 uniform float u_hue;
 uniform vec2 u_resolution;
 
@@ -142,16 +143,8 @@ void main() {
 
   outColor = vec4(
     lch2srgb(
-      ab
+      u_force_gamut ? lch_into_srgb_gamut(ab) : ab
     ),
     1.0
   );
-
-  // if (!is_lch_within_srgb(ab)) {
-  //   if (mod(gl_FragCoord.y + gl_FragCoord.x, 100.0) > 50.0) {
-  //     outColor = mix(outColor, vec4(1.0, 1.0, 1.0, 0.0), 0.1);
-  //   } else {
-  //     outColor = mix(outColor, vec4(1.0, 1.0, 1.0, 0.0), 0.2);
-  //   }
-  // }
 }

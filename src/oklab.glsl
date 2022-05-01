@@ -2,6 +2,7 @@
  
 precision highp float;
 
+uniform bool u_force_gamut;
 uniform float u_hue;
 uniform vec2 u_resolution;
 
@@ -130,7 +131,7 @@ void main() {
 
   outColor = vec4(
     oklch2srgb(
-      ab
+      u_force_gamut ? oklch_into_srgb_gamut(ab) : ab
     ),
     1.0
   );

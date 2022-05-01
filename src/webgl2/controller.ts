@@ -1,8 +1,6 @@
 import type { ReactiveController, ReactiveControllerHost } from 'lit'
 import type { Ref } from 'lit/directives/ref'
 
-import frag from '../oklab.glsl'
-import vertex from '../vertex.glsl'
 import type { Program, UniformTV } from './program'
 import { setup } from './setup'
 import type { Context } from './setup'
@@ -10,73 +8,101 @@ import type { Context } from './setup'
 export class WebGL2CanvasController<UniformKeys extends string> implements ReactiveController {
   context: Context | null = null
 
-  private init = false
-  private lastUMap: Record<UniformKeys, UniformTV> | null = null
-  private program: Program<UniformKeys | 'u_resolution'> | null = null
-  private timer: number | null = null
+  #initialized = false
+  #lastUMap: Record<UniformKeys, UniformTV> | null = null
+  #programs: readonly Program<UniformKeys | 'u_resolution'>[] = []
+  #timer: number | null = null
+
+  #shadersInitialized = false
+  get shadersInitialized(): boolean {
+    return this.#shadersInitialized
+  }
 
   constructor(private host: ReactiveControllerHost, private canvasRef: Ref<HTMLCanvasElement>) {
     this.host.addController(this)
   }
 
   draw(umap: Record<UniformKeys, UniformTV>): void {
-    this.lastUMap = umap
-
-    if (this.context && this.program) {
-      this.timer = null
-
-      this.program.apply({
-        ...umap,
-        u_resolution: ['2f', this.context.resolution],
-      })
-      this.context.draw()
+    if (!this.#initialized) {
+      return this.#initialize()
     }
+
+    if (this.#timer) {
+      window.clearTimeout(this.#timer)
+    }
+
+    this.#lastUMap = umap
+    this.#timer = window.setTimeout(() => this.#draw(umap))
   }
 
   hostDisconnected(): void {
-    this.init = false
-    this.lastUMap = null
-    this.program = null
+    this.#initialized = false
+    this.#lastUMap = null
 
-    if (this.timer) {
-      window.clearTimeout(this.timer)
+    for (const program of this.#programs) {
+      program.destroy()
+    }
+
+    if (this.#timer) {
+      window.clearTimeout(this.#timer)
     }
   }
 
-  hostUpdated(): void {
-    if (!this.canvasRef.value) {
+  recompileAndDraw(shaderSources: readonly (readonly [string, string])[], umap: Record<UniformKeys, UniformTV>): void {
+    if (!this.#initialized) {
+      this.#initialize()
+    }
+
+    if (!this.context) {
       return
     }
 
-    if (!this.init) {
-      return this.initialize()
+    if (!this.#shadersInitialized) {
+      this.#shadersInitialized = true
     }
 
-    if (this.timer) {
-      window.clearTimeout(this.timer)
-    }
+    const context = this.context
+    this.#programs = shaderSources.map(([vrtx, frag]) => {
+      const compiledVert = context.compileShader(context.gl.VERTEX_SHADER, vrtx)
+      const compiledFrag = context.compileShader(context.gl.FRAGMENT_SHADER, frag)
+      const program = context.createProgram(compiledVert, compiledFrag)
 
-    this.timer = window.setTimeout(() => this.lastUMap && this.draw(this.lastUMap))
+      return program
+    })
+
+    this.draw(umap)
   }
 
   updateViewport(width: number, height: number): void {
     if (this.context) {
       this.context.resize(width, height)
-      this.lastUMap && this.draw(this.lastUMap)
+      this.#lastUMap && this.draw(this.#lastUMap)
     }
   }
 
-  private initialize(): void {
+  #initialize(): void {
     if (!this.canvasRef.value) {
       return
     }
 
-    this.init = true
+    this.#initialized = true
 
-    this.context = setup(this.canvasRef.value)
+    const context = setup(this.canvasRef.value)
+    this.context = context
+  }
 
-    const shaderFrag = this.context.compileShader(this.context.gl.FRAGMENT_SHADER, frag)
-    const shaderVert = this.context.compileShader(this.context.gl.VERTEX_SHADER, vertex)
-    this.program = this.context.createProgram(shaderVert, shaderFrag)
+  #draw(umap: Record<UniformKeys, UniformTV>): void {
+    if (this.context) {
+      this.#timer = null
+
+      for (const program of this.#programs) {
+        program.apply({
+          ...umap,
+          u_resolution: ['2f', this.context.resolution],
+        })
+      }
+
+      this.context.draw()
+    }
   }
 }

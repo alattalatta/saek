@@ -1,12 +1,17 @@
 import { css, html, LitElement } from 'lit'
 import { createRef, ref } from 'lit/directives/ref'
 
+import lab from './lab.glsl'
+import oklab from './oklab.glsl'
 import type { Canvas } from './saek-canvas'
+import vrtx from './vertex.glsl'
 import './saek-canvas'
 
 class ColorSquare extends LitElement {
   static properties = {
+    force: { state: true },
     hue: { type: Number },
+    ok: { state: true },
   }
 
   static styles = css`
@@ -15,17 +20,27 @@ class ColorSquare extends LitElement {
     }
   `
 
+  force: boolean
   hue: number
+  ok: boolean
 
-  private rendererRef = createRef<Canvas<'u_hue'>>()
+  private rendererRef = createRef<Canvas<'u_hue' | 'u_force_gamut'>>()
 
   constructor() {
     super()
+    this.force = false
     this.hue = 0
+    this.ok = false
   }
 
   protected render(): unknown {
-    return html`<saek-canvas ${ref(this.rendererRef)} .uniforms=${{ u_hue: ['1f', [this.hue]] }}></saek-canvas>`
+    return html`<saek-canvas
+        ${ref(this.rendererRef)}
+        .shaders=${[[vrtx, this.ok ? oklab : lab]] as const}
+        .uniforms=${{ u_force_gamut: ['1f', [this.force ? 1 : 0]], u_hue: ['1f', [this.hue]] }}
+      ></saek-canvas>
+      <button @click=${() => (this.ok = !this.ok)}>${this.ok ? 'OKLAB' : 'LAB'}</button>
+      <button @click=${() => (this.force = !this.force)}>${this.force ? 'FORCED' : 'NORMAL'}</button>`
   }
 
   protected updated(): void {

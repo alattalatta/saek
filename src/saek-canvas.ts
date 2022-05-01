@@ -1,11 +1,21 @@
+import type { PropertyValues } from 'lit'
 import { css, html, LitElement } from 'lit'
 import { createRef, ref } from 'lit/directives/ref'
 
 import type { UniformTV } from './webgl2'
 import { WebGL2CanvasController } from './webgl2'
 
+type Shaders = readonly (readonly [string, string])[]
+
 class Canvas<UniformKeys extends string> extends LitElement {
   static properties = {
+    shaders: {
+      attribute: 'shaders',
+      hasChanged: (a: Shaders, b: Shaders) => {
+        return JSON.stringify(a) !== JSON.stringify(b)
+      },
+      type: Array,
+    },
     uniforms: { type: Object },
   }
 
@@ -18,11 +28,20 @@ class Canvas<UniformKeys extends string> extends LitElement {
     }
   `
 
-  rendererRef = createRef<HTMLCanvasElement>()
-  uniforms = {} as Record<UniformKeys, UniformTV>
+  shaders: readonly (readonly [string, string])[]
+  uniforms: Record<UniformKeys, UniformTV>
 
-  private canvasController = new WebGL2CanvasController<UniformKeys>(this, this.rendererRef)
+  private canvasController: WebGL2CanvasController<UniformKeys>
   private observer: ResizeObserver | null = null
+  private rendererRef = createRef<HTMLCanvasElement>()
+
+  constructor() {
+    super()
+    this.shaders = []
+    this.uniforms = {} as Record<UniformKeys, UniformTV>
+
+    this.canvasController = new WebGL2CanvasController<UniformKeys>(this, this.rendererRef)
+  }
 
   connectedCallback(): void {
     super.connectedCallback()
@@ -44,8 +63,15 @@ class Canvas<UniformKeys extends string> extends LitElement {
   }
 
   protected render(): unknown {
-    this.canvasController.draw(this.uniforms)
     return html`<canvas ${ref(this.rendererRef)}></canvas>`
+  }
+
+  protected updated(changedProperties: PropertyValues): void {
+    if (!this.canvasController.shadersInitialized || changedProperties.has('shaders')) {
+      this.canvasController.recompileAndDraw(this.shaders, this.uniforms)
+    } else {
+      this.canvasController.draw(this.uniforms)
+    }
   }
 }
 
