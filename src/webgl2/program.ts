@@ -19,7 +19,7 @@ type UniformParamsMap = {
   [key in UniformType]: UniformParam<key>
 }
 
-type UniformTV = KeyedTuple<UniformParamsMap>
+export type UniformTV = KeyedTuple<UniformParamsMap>
 
 type Program<UniformKeys extends string> = {
   apply: (umap: Record<UniformKeys, UniformTV>) => void
