@@ -7,13 +7,13 @@ type UniformDataType = `${'f' | 'i' | 'ui'}`
 type UniformType = `${UniformDimension}${UniformDataType}`
 
 type UniformParam<T> = T extends `1${string}`
-  ? [number]
+  ? readonly [number]
   : T extends `2${string}`
-  ? [number, number]
+  ? readonly [number, number]
   : T extends `3${string}`
-  ? [number, number, number]
+  ? readonly [number, number, number]
   : T extends `4${string}`
-  ? [number, number, number, number]
+  ? readonly [number, number, number, number]
   : never
 type UniformParamsMap = {
   [key in UniformType]: UniformParam<key>

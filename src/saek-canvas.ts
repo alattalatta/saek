@@ -1,11 +1,13 @@
 import { css, html, LitElement } from 'lit'
 import { createRef, ref } from 'lit/directives/ref'
 
-import red from './red.glsl'
+import frag from './oklab.glsl'
 import vertex from './vertex.glsl'
 import type { Context } from './webgl2'
 import { setup } from './webgl2'
 import type { Program } from './webgl2/program'
+
+type UniformKeys = 'u_hue' | 'u_resolution'
 
 class CanvasWebGL2 extends LitElement {
   static properties = {
@@ -27,14 +29,14 @@ class CanvasWebGL2 extends LitElement {
   private canvasRef = createRef<HTMLCanvasElement>()
   private context: Context | null = null
   private observer: ResizeObserver | null = null
-  private program: Program<'red'> | null = null
+  private program: Program<UniformKeys> | null = null
   private timer: number | null = null
 
-  private red: number
+  private hue: number
 
   constructor() {
     super()
-    this.red = 0
+    this.hue = 0
   }
 
   connectedCallback(): void {
@@ -60,17 +62,17 @@ class CanvasWebGL2 extends LitElement {
     if (this.canvasRef.value) {
       this.context = setup(this.canvasRef.value)
 
-      const shaderFrag = this.context.compileShader(this.context.gl.FRAGMENT_SHADER, red)
+      const shaderFrag = this.context.compileShader(this.context.gl.FRAGMENT_SHADER, frag)
       const shaderVert = this.context.compileShader(this.context.gl.VERTEX_SHADER, vertex)
-      this.program = this.context.createProgram<'red'>(shaderVert, shaderFrag)
+      this.program = this.context.createProgram(shaderVert, shaderFrag)
     }
   }
 
   protected render(): unknown {
     return html`
       <canvas ${ref(this.canvasRef)}></canvas>
-      <input type="range" min="0" max="1" step="0.01" value=${this.red} @input=${this.updateRed} />
-      <p>${this.red}</p>
+      <input type="range" min="0" max="360" step="0.01" value=${this.hue} @input=${this.updateRed} />
+      <p>${this.hue}</p>
     `
   }
 
@@ -86,19 +88,23 @@ class CanvasWebGL2 extends LitElement {
     if (this.context && this.program) {
       this.timer = null
 
-      this.program.apply({ red: ['1f', [this.red]] })
+      this.program.apply({
+        u_hue: ['1f', [this.hue]],
+        u_resolution: ['2f', this.context.Resolution],
+      })
       this.context.draw()
     }
   }
 
   private updateRed(event: InputEvent): void {
     const target = event.target as HTMLInputElement
-    this.red = Number(target.value || 0)
+    this.hue = Number(target.value || 0)
   }
 
   private updateViewport(width: number, height: number): void {
     if (this.context) {
       this.context.resize(width, height)
+      this.draw()
     }
   }
 }
