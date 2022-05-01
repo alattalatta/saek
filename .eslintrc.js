@@ -6,6 +6,10 @@ module.exports = {
   parserOptions: {
     project: './tsconfig.json',
   },
+  rules: {
+    '@typescript-eslint/member-ordering': 0,
+    '@typescript-eslint/unbound-method': 0,
+  },
   settings: {
     'import/resolver': {
       typescript: {

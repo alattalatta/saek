@@ -4,7 +4,10 @@ import { createProgram } from './program'
 
 type Context = {
   compileShader: (type: number, source: string) => WebGLShader
-  createProgram: (vertex: WebGLShader, fragment: WebGLShader) => Program
+  createProgram: <UniformKeys extends string = string>(
+    vertex: WebGLShader,
+    fragment: WebGLShader,
+  ) => Program<UniformKeys>
   draw: () => void
   gl: WebGL2RenderingContext
   resize: (width: number, height: number) => void
@@ -48,7 +51,10 @@ function setup(element: HTMLCanvasElement): Context {
     return shader
   }
 
-  const createProgramWrap = (vertex: WebGLShader, fragment: WebGLShader): Program => {
+  const createProgramWrap = <UniformKeys extends string = string>(
+    vertex: WebGLShader,
+    fragment: WebGLShader,
+  ): Program<UniformKeys> => {
     const program = createProgram(gl, vertex, fragment)
     return program
   }

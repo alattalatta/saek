@@ -5,10 +5,11 @@ import red from './red.glsl'
 import vertex from './vertex.glsl'
 import type { Context } from './webgl2'
 import { setup } from './webgl2'
+import type { Program } from './webgl2/program'
 
 class CanvasWebGL2 extends LitElement {
   static properties = {
-    button: { state: true },
+    red: { state: true },
   }
 
   static styles = css`
@@ -26,10 +27,14 @@ class CanvasWebGL2 extends LitElement {
   private canvasRef = createRef<HTMLCanvasElement>()
   private context: Context | null = null
   private observer: ResizeObserver | null = null
-  private raf: number | null = null
+  private program: Program<'red'> | null = null
+  private timer: number | null = null
+
+  private red: number
 
   constructor() {
     super()
+    this.red = 0
   }
 
   connectedCallback(): void {
@@ -57,27 +62,38 @@ class CanvasWebGL2 extends LitElement {
 
       const shaderFrag = this.context.compileShader(this.context.gl.FRAGMENT_SHADER, red)
       const shaderVert = this.context.compileShader(this.context.gl.VERTEX_SHADER, vertex)
-      const program = this.context.createProgram(shaderVert, shaderFrag)
-      program.apply()
-
-      const draw = (): void => {
-        if (!this.context) {
-          this.raf && cancelAnimationFrame(this.raf)
-          this.raf = null
-          return
-        }
-
-        this.context.draw()
-        // this.raf = requestAnimationFrame(draw)
-      }
-
-      setTimeout(draw)
-      // requestAnimationFrame(draw)
+      this.program = this.context.createProgram<'red'>(shaderVert, shaderFrag)
     }
   }
 
   protected render(): unknown {
-    return html`<canvas ${ref(this.canvasRef)}></canvas>`
+    return html`
+      <canvas ${ref(this.canvasRef)}></canvas>
+      <input type="range" min="0" max="1" step="0.01" value=${this.red} @input=${this.updateRed} />
+      <p>${this.red}</p>
+    `
+  }
+
+  protected updated(): void {
+    if (this.timer) {
+      window.clearTimeout(this.timer)
+    }
+
+    this.timer = window.setTimeout(this.draw)
+  }
+
+  private draw = (): void => {
+    if (this.context && this.program) {
+      this.timer = null
+
+      this.program.apply({ red: ['1f', [this.red]] })
+      this.context.draw()
+    }
+  }
+
+  private updateRed(event: InputEvent): void {
+    const target = event.target as HTMLInputElement
+    this.red = Number(target.value || 0)
   }
 
   private updateViewport(width: number, height: number): void {
