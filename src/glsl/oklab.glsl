@@ -8,49 +8,8 @@ uniform vec2 u_resolution;
 
 out vec4 outColor;
 
-vec3 unpolarize(vec3 lch) {
-  return vec3(
-    lch.x,
-    lch.y * cos(radians(lch.z)),
-    lch.y * sin(radians(lch.z))
-  );
-}
-
-vec3 polarize(vec3 lab) {
-  float hue = degrees(atan(lab.z, lab.y));
-
-  return vec3(
-    lab.x,
-    length(lab.yz),
-    hue
-  );
-}
-
-vec3 xyz2rgb(vec3 xyz) {
-  mat3 m = mat3(
-     3.2409699419045226,  -1.537383177570094,  -0.4986107602930034,
-    -0.9692436362808796,   1.8759675015077202,  0.04155505740717559,
-     0.05563007969699366, -0.20397695888897652, 1.0569715142428786
-  );
-
-  return xyz * m;
-}
-
-float lin2srgb(float x) {
-  return x <= 0.0031308 ? 12.92 * x : 1.055 * pow(x, 1.0 / 2.4) - 0.055;
-}
-
-vec3 rgb2srgb(vec3 rgb) {
-  return vec3(
-    lin2srgb(rgb.r),
-    lin2srgb(rgb.g),
-    lin2srgb(rgb.b)
-  );
-}
-
-vec3 xyz2srgb(vec3 xyz) {
-  return rgb2srgb(xyz2rgb(xyz));
-}
+#pragma glslify: unpolarize = require('./unpolarize')
+#pragma glslify: xyz2srgb = require('./color/xyz2srgb')
 
 vec3 oklab2xyz(vec3 oklab_) {
   mat3 lmsxyz = mat3(
@@ -135,12 +94,4 @@ void main() {
     ),
     1.0
   );
-
-  // if (!is_oklch_within_srgb(ab)) {
-  //   if (mod(rt.y + rt.x, 0.1) > 0.05) {
-  //     outColor = mix(outColor, vec4(1.0, 1.0, 1.0, 0.0), 0.1);
-  //   } else {
-  //     outColor = mix(outColor, vec4(1.0, 1.0, 1.0, 0.0), 0.2);
-  //   }
-  // }
 }

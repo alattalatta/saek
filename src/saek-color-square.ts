@@ -1,8 +1,8 @@
 import { css, html, LitElement } from 'lit'
 import { createRef, ref } from 'lit/directives/ref'
 
-import lab from './lab.glsl'
-import oklab from './oklab.glsl'
+import lab from './glsl/lab.glsl'
+import oklab from './glsl/oklab.glsl'
 import type { Canvas } from './saek-canvas'
 import vrtx from './vertex.glsl'
 import './saek-canvas'
