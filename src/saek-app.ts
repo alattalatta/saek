@@ -11,7 +11,6 @@ class App extends LitElement {
 
     saek-color-square {
       width: 300px;
-      height: 300px;
     }
   `
 

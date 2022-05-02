@@ -1,4 +1,4 @@
-import type { PropertyValues } from 'lit'
+import type { PropertyDeclarations, PropertyValues } from 'lit'
 import { css, html, LitElement } from 'lit'
 import { createRef, ref } from 'lit/directives/ref'
 
@@ -8,7 +8,7 @@ import { WebGL2CanvasController } from './webgl2'
 type Shaders = readonly (readonly [string, string])[]
 
 class Canvas<UniformKeys extends string> extends LitElement {
-  static properties = {
+  static properties: PropertyDeclarations = {
     shaders: {
       attribute: 'shaders',
       hasChanged: (a: Shaders, b: Shaders) => {
@@ -20,7 +20,11 @@ class Canvas<UniformKeys extends string> extends LitElement {
   }
 
   static styles = css`
-    :host,
+    :host {
+      display: block;
+      overflow: hidden;
+    }
+
     canvas {
       width: 100%;
       height: 100%;
