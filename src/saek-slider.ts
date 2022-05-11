@@ -2,7 +2,10 @@ import type { PropertyDeclarations } from 'lit'
 import { css, html, LitElement } from 'lit'
 import { createRef, ref } from 'lit/directives/ref'
 
+import { disableBehavior } from './lib/event'
+import { clamp } from './lib/number'
 import type { Interactive } from './saek-interactive'
+
 import './saek-interactive'
 
 class Slider extends LitElement {
@@ -81,17 +84,26 @@ class Slider extends LitElement {
           min=${this.min}
           step=${this.step}
           value=${this.value}
-          @input=${this.#updateValueFromKeyboard}
+          @keydown=${this.#updateValueFromKeyboard}
+          @input=${disableBehavior}
         />
       </saek-interactive>
     `
   }
 
-  #updateValueFromKeyboard = (event: InputEvent): void => {
-    event.stopPropagation()
-    this.value = parseFloat((event.target as HTMLInputElement).value)
+  #updateValueFromKeyboard = (event: KeyboardEvent): void => {
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') {
+      return
+    }
 
-    this.dispatchEvent(new InputEvent('input'))
+    const mod = (event.key === 'ArrowLeft' ? -1 : 1) * (event.shiftKey ? 10 : 1)
+    const newVal = clamp(this.min, this.max, this.value + mod * this.step)
+
+    if (newVal !== this.value) {
+      this.value = newVal
+
+      this.dispatchEvent(new InputEvent('input'))
+    }
   }
 
   #updateValueFromPointer = (event: InputEvent): void => {

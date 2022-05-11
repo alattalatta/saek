@@ -1,6 +1,7 @@
 import type { PropertyDeclarations } from 'lit'
 import { html, LitElement } from 'lit'
 
+import { clamp } from './lib/number'
 import type { Vec2 } from './lib/vec2'
 import { vec2 } from './lib/vec2'
 
@@ -84,10 +85,6 @@ class Interactive extends LitElement {
       this.dispatchEvent(new InputEvent('input'))
     }
   }
-}
-
-function clamp(n: number, m: number, v: number): number {
-  return Math.max(Math.min(m, v), n)
 }
 
 customElements.define('saek-interactive', Interactive)

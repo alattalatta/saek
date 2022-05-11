@@ -121,7 +121,7 @@ class ColorSquare extends LitElement {
             ></div>`
           : null}
       </saek-interactive>
-      <saek-slider max="360" min="0" step="0.1" value=${this.hue} @input=${this.#updateHue}></saek-slider>
+      <saek-slider max="360" min="0" step="1" value=${this.hue} @input=${this.#updateHue}></saek-slider>
       <button @click=${() => (this.ok = !this.ok)}>${this.ok ? 'OKLAB' : 'LAB'}</button>
       <button @click=${() => (this.forceGamut = !this.forceGamut)}>${this.forceGamut ? 'FORCED' : 'NORMAL'}</button>`
   }
