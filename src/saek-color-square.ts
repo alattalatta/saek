@@ -9,14 +9,15 @@ import { lab2xyz } from './lib/color/lab2xyz'
 import { unpolarize } from './lib/color/unpolarize'
 import { xyz2srgb } from './lib/color/xyz2srgb'
 import type { Vec2 } from './lib/vec2'
-import { vec2 } from './lib/vec2'
 import { mult, vec3 } from './lib/vec3'
 import type { Canvas } from './saek-canvas'
+import type { Interactive } from './saek-interactive'
 import type { Slider } from './saek-slider'
 import vrtx from './vertex.glsl'
 import type { UniformTV } from './webgl2'
 
 import './saek-canvas'
+import './saek-interactive'
 import './saek-slider'
 
 type UniformKeys = 'u_chroma_max' | 'u_force_gamut' | 'u_hue'
@@ -34,24 +35,26 @@ class ColorSquare extends LitElement {
       display: block;
     }
 
+    saek-interactive {
+      cursor: crosshair;
+      display: block;
+      position: relative;
+    }
+
     saek-canvas {
       width: 300px;
       height: 300px;
       border-radius: 4px;
     }
 
-    .canvas-wrap {
-      cursor: crosshair;
-      position: relative;
-    }
-
     .preview {
       width: 48px;
       height: 48px;
-      pointer-events: none;
+      cursor: move;
       position: absolute;
       top: 0;
       left: 0;
+      z-index: 1;
     }
 
     saek-slider::part(slider) {
@@ -63,11 +66,15 @@ class ColorSquare extends LitElement {
   forceGamut: boolean
   hue: number
   ok: boolean
-  pointer: Vec2
+  pointer: Vec2 | null
 
   private rendererRef = createRef<Canvas<UniformKeys>>()
 
   public get currentColor(): string {
+    if (!this.pointer) {
+      return 'none'
+    }
+
     const l = this.pointer[1] * 100
     const c = this.pointer[0] * (this.ok ? 33 : 134)
     const h = this.hue
@@ -94,24 +101,26 @@ class ColorSquare extends LitElement {
     this.forceGamut = false
     this.hue = 0
     this.ok = false
-    this.pointer = vec2(0, 1)
+    this.pointer = null
   }
 
   protected render(): unknown {
-    return html`<div class="canvas-wrap" @pointermove=${this.#updatePointer}>
+    return html`<saek-interactive @input=${this.#updatePointer}>
         <saek-canvas
           ${ref(this.rendererRef)}
           .shaders=${[[vrtx, this.ok ? oklabFrag : labFrag]] as const}
           .uniforms=${this.uniforms}
         ></saek-canvas>
-        <div
-          class="preview"
-          style=${styleMap({
-            backgroundColor: this.currentColor,
-            transform: `translate(${300 * this.pointer[0]}px, ${300 * (1 - this.pointer[1])}px)`,
-          })}
-        ></div>
-      </div>
+        ${this.pointer
+          ? html`<div
+              class="preview"
+              style=${styleMap({
+                backgroundColor: this.currentColor,
+                transform: `translate(${300 * this.pointer[0]}px, ${300 * (1 - this.pointer[1])}px)`,
+              })}
+            ></div>`
+          : null}
+      </saek-interactive>
       <saek-slider max="360" min="0" step="0.1" value=${this.hue} @input=${this.#updateHue}></saek-slider>
       <button @click=${() => (this.ok = !this.ok)}>${this.ok ? 'OKLAB' : 'LAB'}</button>
       <button @click=${() => (this.forceGamut = !this.forceGamut)}>${this.forceGamut ? 'FORCED' : 'NORMAL'}</button>`
@@ -125,11 +134,8 @@ class ColorSquare extends LitElement {
     this.hue = (event.target as Slider).value
   }
 
-  #updatePointer = (event: PointerEvent): void => {
-    if (!event.pressure) {
-      return
-    }
-    this.pointer = vec2(event.offsetX / 300, (300 - event.offsetY) / 300)
+  #updatePointer = (event: InputEvent): void => {
+    this.pointer = (event.target as Interactive).value
   }
 }
 

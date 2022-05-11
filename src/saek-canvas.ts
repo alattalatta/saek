@@ -61,9 +61,7 @@ class Canvas<UniformKeys extends string> extends LitElement {
   disconnectedCallback(): void {
     super.disconnectedCallback()
 
-    if (this.observer) {
-      this.observer.disconnect()
-    }
+    this.observer?.disconnect()
   }
 
   protected render(): unknown {
