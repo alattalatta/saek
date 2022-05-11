@@ -9,6 +9,10 @@ class App extends LitElement {
       display: block;
     }
 
+    div {
+      padding: 2rem;
+    }
+
     saek-color-square {
       width: 300px;
     }
