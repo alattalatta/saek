@@ -3,6 +3,7 @@
 precision highp float;
 
 uniform bool u_force_gamut;
+uniform float u_chroma_max; // 134
 uniform float u_hue;
 uniform vec2 u_resolution;
 
@@ -84,7 +85,7 @@ void main() {
   );
   vec3 b = vec3(
     rt.y * 100.0,
-    134.0,
+    u_chroma_max,
     u_hue
   );
   vec3 ab = mix(

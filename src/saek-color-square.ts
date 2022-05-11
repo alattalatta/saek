@@ -13,7 +13,7 @@ import './saek-slider'
 
 class ColorSquare extends LitElement {
   static properties: PropertyDeclarations = {
-    force: { state: true },
+    forceGamut: { state: true },
     hue: { type: Number },
     ok: { state: true },
   }
@@ -35,15 +35,15 @@ class ColorSquare extends LitElement {
     }
   `
 
-  force: boolean
+  forceGamut: boolean
   hue: number
   ok: boolean
 
-  private rendererRef = createRef<Canvas<'u_hue' | 'u_force_gamut'>>()
+  private rendererRef = createRef<Canvas<'u_chroma_max' | 'u_force_gamut' | 'u_hue'>>()
 
   constructor() {
     super()
-    this.force = false
+    this.forceGamut = false
     this.hue = 0
     this.ok = false
   }
@@ -52,11 +52,15 @@ class ColorSquare extends LitElement {
     return html`<saek-canvas
         ${ref(this.rendererRef)}
         .shaders=${[[vrtx, this.ok ? oklab : lab]] as const}
-        .uniforms=${{ u_force_gamut: ['1f', [this.force ? 1 : 0]], u_hue: ['1f', [this.hue]] }}
+        .uniforms=${{
+          u_chroma_max: ['1f', [this.ok ? 33 : 134]],
+          u_force_gamut: ['1f', [this.forceGamut ? 1 : 0]],
+          u_hue: ['1f', [this.hue]],
+        }}
       ></saek-canvas>
       <saek-slider max="360" min="0" step="0.1" value=${this.hue} @input=${this.#updateHue}></saek-slider>
       <button @click=${() => (this.ok = !this.ok)}>${this.ok ? 'OKLAB' : 'LAB'}</button>
-      <button @click=${() => (this.force = !this.force)}>${this.force ? 'FORCED' : 'NORMAL'}</button>`
+      <button @click=${() => (this.forceGamut = !this.forceGamut)}>${this.forceGamut ? 'FORCED' : 'NORMAL'}</button>`
   }
 
   protected updated(): void {
