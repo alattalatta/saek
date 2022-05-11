@@ -64,6 +64,8 @@ class Interactive extends LitElement {
 
   #dragEnd = (): void => {
     this.#dragging = false
+
+    this.dispatchEvent(new PointerEvent('pointerup'))
   }
 
   #dragStart = (event: PointerEvent): void => {

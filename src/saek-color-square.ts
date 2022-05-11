@@ -24,6 +24,7 @@ type UniformKeys = 'u_chroma_max' | 'u_force_gamut' | 'u_hue'
 
 class ColorSquare extends LitElement {
   static properties: PropertyDeclarations = {
+    dragging: { state: true },
     forceGamut: { state: true },
     hue: { type: Number },
     ok: { state: true },
@@ -47,14 +48,20 @@ class ColorSquare extends LitElement {
       border-radius: 4px;
     }
 
-    .preview {
-      width: 48px;
-      height: 48px;
-      cursor: move;
+    .preview-pos {
       position: absolute;
       top: 0;
       left: 0;
       z-index: 1;
+    }
+
+    .preview-scale {
+      width: 0.75rem;
+      height: 0.75rem;
+      border: 1px solid rgb(255 255 255 / 0.7);
+      border-radius: 50%;
+      box-shadow: 0 0 1px 1px rgb(0 0 0 / 0.3);
+      cursor: move;
     }
 
     saek-slider::part(slider) {
@@ -63,12 +70,14 @@ class ColorSquare extends LitElement {
     }
   `
 
-  forceGamut: boolean
-  hue: number
   ok: boolean
-  pointer: Vec2 | null
 
-  private rendererRef = createRef<Canvas<UniformKeys>>()
+  private dragging: boolean
+  private forceGamut: boolean
+  private hue: number
+  private pointer: Vec2 | null
+
+  #rendererRef = createRef<Canvas<UniformKeys>>()
 
   public get currentColor(): string {
     if (!this.pointer) {
@@ -98,6 +107,7 @@ class ColorSquare extends LitElement {
 
   constructor() {
     super()
+    this.dragging = false
     this.forceGamut = false
     this.hue = 0
     this.ok = false
@@ -105,20 +115,31 @@ class ColorSquare extends LitElement {
   }
 
   protected render(): unknown {
-    return html`<saek-interactive @input=${this.#updatePointer}>
+    const previewPosStyles = this.pointer
+      ? styleMap({
+          transform: `translate(${300 * this.pointer[0]}px, ${300 * (1 - this.pointer[1])}px) translate(-50%, -50%) `,
+        })
+      : {}
+    const previewBodyStyles = styleMap({
+      backgroundColor: this.currentColor,
+      transform: `scale(${this.dragging ? 3 : 1})`,
+      transition: this.dragging ? 'none' : 'transform 0.15s ease-out',
+    })
+
+    return html`<saek-interactive
+        @input=${this.#updatePointer}
+        @pointerdown=${this.#dragStart}
+        @pointerup=${this.#dragEnd}
+      >
         <saek-canvas
-          ${ref(this.rendererRef)}
+          ${ref(this.#rendererRef)}
           .shaders=${[[vrtx, this.ok ? oklabFrag : labFrag]] as const}
           .uniforms=${this.uniforms}
         ></saek-canvas>
         ${this.pointer
-          ? html`<div
-              class="preview"
-              style=${styleMap({
-                backgroundColor: this.currentColor,
-                transform: `translate(${300 * this.pointer[0]}px, ${300 * (1 - this.pointer[1])}px)`,
-              })}
-            ></div>`
+          ? html`<div class="preview-pos" style=${previewPosStyles}>
+              <div class="preview-scale" style=${previewBodyStyles}></div>
+            </div>`
           : null}
       </saek-interactive>
       <saek-slider max="360" min="0" step="1" value=${this.hue} @input=${this.#updateHue}></saek-slider>
@@ -127,7 +148,15 @@ class ColorSquare extends LitElement {
   }
 
   protected updated(): void {
-    this.rendererRef.value?.requestUpdate()
+    this.#rendererRef.value?.requestUpdate()
+  }
+
+  #dragEnd = (): void => {
+    this.dragging = false
+  }
+
+  #dragStart = (): void => {
+    this.dragging = true
   }
 
   #updateHue = (event: InputEvent): void => {
