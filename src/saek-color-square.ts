@@ -10,6 +10,9 @@ import vrtx from './vertex.glsl'
 
 import './saek-canvas'
 import './saek-slider'
+import { UniformTV } from './webgl2'
+
+type UniformKeys = 'u_chroma_max' | 'u_force_gamut' | 'u_hue'
 
 class ColorSquare extends LitElement {
   static properties: PropertyDeclarations = {
@@ -39,7 +42,15 @@ class ColorSquare extends LitElement {
   hue: number
   ok: boolean
 
-  private rendererRef = createRef<Canvas<'u_chroma_max' | 'u_force_gamut' | 'u_hue'>>()
+  private rendererRef = createRef<Canvas<UniformKeys>>()
+
+  public get uniforms(): Record<UniformKeys, UniformTV> {
+    return {
+      u_chroma_max: ['1f', [this.ok ? 33 : 134]],
+      u_force_gamut: ['1f', [this.forceGamut ? 1 : 0]],
+      u_hue: ['1f', [this.hue]],
+    }
+  }
 
   constructor() {
     super()
@@ -52,11 +63,7 @@ class ColorSquare extends LitElement {
     return html`<saek-canvas
         ${ref(this.rendererRef)}
         .shaders=${[[vrtx, this.ok ? oklab : lab]] as const}
-        .uniforms=${{
-          u_chroma_max: ['1f', [this.ok ? 33 : 134]],
-          u_force_gamut: ['1f', [this.forceGamut ? 1 : 0]],
-          u_hue: ['1f', [this.hue]],
-        }}
+        .uniforms=${this.uniforms}
       ></saek-canvas>
       <saek-slider max="360" min="0" step="0.1" value=${this.hue} @input=${this.#updateHue}></saek-slider>
       <button @click=${() => (this.ok = !this.ok)}>${this.ok ? 'OKLAB' : 'LAB'}</button>
